@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // Material study: Poly Haven Camera_01. Keep our rig and geometry; its atlas
 // belongs to a different UV layout, so use repeatable CC0 Brown Leather maps.
-export async function createCameraMaterials(renderer) {
+export function createCameraMaterials(renderer) {
   const loader = new THREE.TextureLoader();
   const anisotropy = Math.min(renderer.capabilities.getMaxAnisotropy(), 8);
   const load = async (name, colorSpace) => {
@@ -14,27 +14,28 @@ export async function createCameraMaterials(renderer) {
     texture.anisotropy = anisotropy;
     return texture;
   };
-  let maps = [];
-  try {
-    maps = await Promise.all([
+  const leather = new THREE.MeshPhysicalMaterial({
+    name: 'Leather | charcoal PBR', color: '#292b2c',
+    normalScale: new THREE.Vector2(0.72, 0.72),
+    roughness: 0.92,
+    metalness: 0, clearcoat: 0.07, clearcoatRoughness: 0.5,
+    envMapIntensity: 0.7,
+  });
+  const ready = Promise.all([
       load('charcoal-color.webp', THREE.SRGBColorSpace),
       load('leather-normal.webp', THREE.NoColorSpace),
       load('leather-arm.webp', THREE.NoColorSpace),
-    ]);
-    // Upload before the camera is revealed, avoiding a first-use texture hitch.
-    maps.forEach((map) => renderer.initTexture(map));
-  } catch (error) {
+    ]).then(([colorMap, normalMap, armMap]) => {
+    // Upload the maps as soon as they finish loading to avoid a first-use hitch.
+    [colorMap, normalMap, armMap].forEach((map) => renderer.initTexture(map));
+    leather.map = colorMap;
+    leather.normalMap = normalMap;
+    leather.roughnessMap = armMap;
+    leather.aoMap = armMap;
+    leather.aoMapIntensity = 0.35;
+    leather.needsUpdate = true;
+  }).catch((error) => {
     console.warn('Leather textures unavailable; using charcoal material.', error);
-  }
-  const [colorMap, normalMap, armMap] = maps;
-  const leather = new THREE.MeshPhysicalMaterial({
-    name: 'Leather | charcoal PBR', color: '#292b2c',
-    map: colorMap || null, normalMap: normalMap || null,
-    normalScale: new THREE.Vector2(0.72, 0.72),
-    roughnessMap: armMap || null, roughness: 0.92,
-    aoMap: armMap || null, aoMapIntensity: 0.35,
-    metalness: 0, clearcoat: 0.07, clearcoatRoughness: 0.5,
-    envMapIntensity: 0.7,
   });
   const chrome = new THREE.MeshStandardMaterial({
     name: 'Chrome | satin PBR', color: '#c4c9ca',
@@ -69,6 +70,7 @@ export async function createCameraMaterials(renderer) {
   innerGlass.roughness = 0.11;
 
   return {
+    ready,
     apply(mesh, objectPath) {
       const originalName = mesh.material.name;
       if (originalName.includes('Leather')) mesh.material = leather;

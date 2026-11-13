@@ -42,8 +42,8 @@ softbox.position.set(-3.5, 4.5, 4); softbox.lookAt(0, 1.6, 0); scene.add(softbox
 const strip = new THREE.RectAreaLight(0xe2f0ff, 3, 0.8, 4);
 strip.position.set(4.5, 2.8, 2); strip.lookAt(0, 1.5, 0); scene.add(strip);
 
-// Preload real PBR maps alongside the model before revealing the product.
-const cameraMaterialsReady = createCameraMaterials(renderer);
+// Load real PBR maps while the model downloads, then apply them progressively.
+const cameraMaterials = createCameraMaterials(renderer);
 let model; let pivots = {}; let fold = 0; let foldTarget = 0; let crankStart = -1;
 const finderScreenMeshes = []; let finderScreenTexture;
 const clamp = (v) => THREE.MathUtils.clamp(v, 0, 1);
@@ -90,12 +90,12 @@ function syncFinderScreen(video) {
     screen.material.needsUpdate = true;
   });
 }
-Promise.all([new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/camera.glb`), cameraMaterialsReady]).then(([gltf, materials]) => {
+new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/camera.glb`).then((gltf) => {
   model = gltf.scene;
   model.traverse((o) => {
     if (o.isMesh && o.material) {
       const objectPath = [o.name, o.parent?.name, o.parent?.parent?.name].join(' | ').replaceAll('_', ' ');
-      materials.apply(o, objectPath);
+      cameraMaterials.apply(o, objectPath);
       if (/Viewfinder \| focusing screen/i.test(objectPath)) {
         o.geometry.computeBoundingBox();
         const bounds = o.geometry.boundingBox;
@@ -127,10 +127,14 @@ Promise.all([new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/camer
   });
   syncFinderScreen(sceneVideos.find((video) => video.classList.contains('active')));
   scene.add(model); loading.remove();
-  // Give the GLB and PBR maps the first network slots on a cold public visit.
-  // Then preload every scene for the first mechanical interaction.
-  sceneVideos.forEach((video) => { video.preload = 'auto'; video.load(); });
-  sceneVideos.find((video) => video.classList.contains('active'))?.play().catch(() => {});
+  // Let the model and PBR maps finish before starting media requests.
+  const activeVideo = sceneVideos.find((video) => video.classList.contains('active'));
+  if (activeVideo) {
+    activeVideo.preload = 'metadata';
+    activeVideo.load();
+    activeVideo.play().catch(() => {});
+  }
+  loadAudio();
 }).catch((error) => { console.error('Camera load failed', error); loading.textContent = 'Camera could not be loaded.'; });
 const finder = document.querySelector('#finder');
 fold = 1; foldTarget = 1;
@@ -149,19 +153,25 @@ let changingScene = false;
 const AudioContextClass = window.AudioContext || window.webkitAudioContext;
 const audioContext = AudioContextClass ? new AudioContextClass() : null;
 const audioBuffers = new Map();
-const audioReady = audioContext ? Promise.all([
-  ['audio/hasselblad-500cm-preview.mp3', 'advance'],
-  ['audio/camera-handling-cc0.mp3', 'handling'],
-  ['audio/slr-advance-ratchet-cc0.mp3', 'ratchet'],
-  ['audio/film-camera-mechanism-cc0.mp3', 'lock'],
-].map(async ([url, keyName]) => {
-  const response = await fetch(`${import.meta.env.BASE_URL}${url}`);
-  if (!response.ok) throw new Error(`Audio preload failed: ${url}`);
-  audioBuffers.set(keyName, await audioContext.decodeAudioData(await response.arrayBuffer()));
-})).catch(() => {}) : Promise.resolve();
+let audioReady;
+function loadAudio() {
+  if (!audioReady) {
+    audioReady = audioContext ? Promise.all([
+      ['audio/hasselblad-500cm-preview.mp3', 'advance'],
+      ['audio/camera-handling-cc0.mp3', 'handling'],
+      ['audio/slr-advance-ratchet-cc0.mp3', 'ratchet'],
+      ['audio/film-camera-mechanism-cc0.mp3', 'lock'],
+    ].map(async ([url, keyName]) => {
+      const response = await fetch(`${import.meta.env.BASE_URL}${url}`);
+      if (!response.ok) throw new Error(`Audio preload failed: ${url}`);
+      audioBuffers.set(keyName, await audioContext.decodeAudioData(await response.arrayBuffer()));
+    })).catch(() => {}) : Promise.resolve();
+  }
+  return audioReady;
+}
 
 async function playCue(keyName, offset, duration, volume = 0.7) {
-  await audioReady;
+  await loadAudio();
   if (!audioContext || !audioBuffers.has(keyName)) return;
   if (audioContext.state === 'suspended') await audioContext.resume();
   const source = audioContext.createBufferSource();
@@ -179,7 +189,14 @@ function setScene(index) {
   const sceneName = sceneNames[currentScene];
   const activeVideo = sceneVideos.find((video) => video.dataset.scene === sceneName);
   sceneVideos.forEach((video) => {
-    if (video === activeVideo) { video.classList.add('active'); video.play().catch(() => {}); }
+    if (video === activeVideo) {
+      video.classList.add('active');
+      if (model) {
+        video.preload = 'metadata';
+        if (video.networkState === HTMLMediaElement.NETWORK_EMPTY) video.load();
+        video.play().catch(() => {});
+      }
+    }
     else { video.classList.remove('active'); video.pause(); }
   });
   syncFinderScreen(activeVideo);
