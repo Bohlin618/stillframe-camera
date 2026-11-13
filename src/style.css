@@ -43,7 +43,7 @@ select:focus-visible {
   z-index: -2;
 }
 .landscape {
-  background-image: url("/images/coast.jpg");
+  background-image: url("../images/coast.jpg");
   background-size: cover;
   background-position: center;
   transition: filter 0.5s;
