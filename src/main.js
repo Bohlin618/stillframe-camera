@@ -127,6 +127,10 @@ Promise.all([new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/camer
   });
   syncFinderScreen(sceneVideos.find((video) => video.classList.contains('active')));
   scene.add(model); loading.remove();
+  // Give the GLB and PBR maps the first network slots on a cold public visit.
+  // Then preload every scene for the first mechanical interaction.
+  sceneVideos.forEach((video) => { video.preload = 'auto'; video.load(); });
+  sceneVideos.find((video) => video.classList.contains('active'))?.play().catch(() => {});
 }).catch((error) => { console.error('Camera load failed', error); loading.textContent = 'Camera could not be loaded.'; });
 const finder = document.querySelector('#finder');
 fold = 1; foldTarget = 1;
@@ -136,7 +140,6 @@ finder.setAttribute('aria-expanded', 'false');
 const cameraStage = document.querySelector('.camera-stage');
 const shutter = document.querySelector('#mechanical-shutter');
 const sceneVideos = [...document.querySelectorAll('.scene-video')];
-sceneVideos.find((video) => video.classList.contains('active'))?.play().catch(() => {});
 const landscape = document.querySelector('#landscape');
 const sceneButtons = [...document.querySelectorAll('.photo')];
 const sceneNames = sceneButtons.map((button) => button.dataset.image);
