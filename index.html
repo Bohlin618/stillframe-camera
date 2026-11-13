@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14201c" />
+    <title>Stillframe | A moment worth keeping</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <main class="experience" id="home">
+      <div class="landscape" id="landscape" aria-hidden="true">
+        <video class="scene-video active" data-scene="coast" src="/videos/coast.mp4" poster="/images/coast.jpg" muted playsinline loop preload="auto"></video>
+        <video class="scene-video" data-scene="shore" src="/videos/shore.mp4" poster="/images/shore.jpg" muted playsinline loop preload="auto"></video>
+        <video class="scene-video" data-scene="sunset" src="/videos/sunset.mp4" poster="/images/sunset.jpg" muted playsinline loop preload="auto"></video>
+        <video class="scene-video" data-scene="forest" src="/videos/forest.mp4" poster="/images/forest.jpg" muted playsinline loop preload="auto"></video>
+        <video class="scene-video" data-scene="lake" src="/videos/lake.mp4" poster="/images/lake.jpg" muted playsinline loop preload="auto"></video>
+      </div>
+      <div class="shade"></div>
+      <div class="mechanical-shutter" id="mechanical-shutter" aria-hidden="true"></div>
+      <header class="header">
+        <a href="#home" class="brand" aria-label="Stillframe home">STILLFRAME<span>®</span></a>
+        <nav class="navigation" aria-label="Main navigation">
+          <a href="#camera">Camera</a><a href="#collection">Collection</a><a href="#film">Film</a>
+        </nav>
+        <span class="header-note">AN EXPLORATION IN FILM</span>
+      </header>
+
+      <section class="hero-copy" aria-labelledby="page-title">
+        <p class="eyebrow">A DIFFERENT WAY OF SEEING</p>
+        <h1 id="page-title">The film<br /><em>camera.</em></h1>
+        <p class="description">A little slower. A little more intentional.<br />Made for the moments worth keeping.</p>
+        <button class="outline-button" id="explore">EXPLORE THE CAMERA <i data-lucide="arrow-up-right"></i></button>
+      </section>
+
+      <section class="camera-stage" id="camera" aria-label="Interactive 3D film camera">
+        <div id="canvas-container"><div class="loading" id="loading">Preparing camera...</div></div>
+        <div class="stage-caption"><span class="caption-dot"></span> MEDIUM FORMAT · 1960s INSPIRED</div>
+        <div class="camera-controls" aria-label="Camera controls">
+          <button id="finder" class="control" title="Close viewfinder" aria-label="Close viewfinder"><i data-lucide="scan"></i></button>
+          <button id="advance" class="control" title="Advance film" aria-label="Advance film"><i data-lucide="rotate-cw"></i></button>
+          <button id="reset" class="control" title="Reset camera view" aria-label="Reset camera view"><i data-lucide="maximize-2"></i></button>
+        </div>
+      </section>
+
+      <aside class="story">
+        <div class="story-mark"><i data-lucide="aperture"></i></div>
+        <p class="eyebrow">THE ART OF SLOWING DOWN</p>
+        <h2>Moments that<br /><em>stay with you.</em></h2>
+        <p>A frame is more than a photograph.<br />It is a place to return to.</p>
+      </aside>
+
+      <div class="bottom-bar" id="collection">
+        <label class="film-select" id="film"><i data-lucide="film"></i><span><small>FILM SIMULATION</small><select id="film-select" aria-label="Film simulation"><option value="natural">Portra 400</option><option value="warm">Golden hour</option><option value="mono">Monochrome</option></select></span><i data-lucide="chevron-down" class="chevron"></i></label>
+        <div class="gallery" role="group" aria-label="Choose landscape">
+          <button class="photo" data-image="shore" aria-label="Coastal escape"><img src="/images/shore.jpg" alt="" /><span>Coastal escape</span></button>
+          <button class="photo" data-image="sunset" aria-label="Sunlit horizon"><img src="/images/sunset.jpg" alt="" /><span>Sunlit horizon</span></button>
+          <button class="photo selected" data-image="coast" aria-label="Rocky coast" aria-pressed="true"><img src="/images/coast.jpg" alt="" /><span>Rocky coast</span><b><i data-lucide="check"></i></b></button>
+          <button class="photo" data-image="forest" aria-label="Forest path"><img src="/images/forest.jpg" alt="" /><span>Forest path</span></button>
+          <button class="photo" data-image="lake" aria-label="Emerald lake"><img src="/images/lake.jpg" alt="" /><span>Emerald lake</span></button>
+        </div>
+        <div class="edition"><span>THE ART OF</span><strong>LOOKING</strong><span>EST. MMXXVI</span></div>
+      </div>
+      <div class="mobile-note">01 / 05 <span>ANALOGUE STORIES</span></div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
